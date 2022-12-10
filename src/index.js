@@ -1,88 +1,113 @@
 import './css/styles.css';
 import { fetchCountries } from './fetchCountries';
-import Notiflix from 'notiflix';
-import 'notiflix/dist/notiflix-3.2.5.min.css';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import debounce from 'lodash.debounce';
 
 const DEBOUNCE_DELAY = 300;
-
 const refs = {
-    cardCountryList: document.querySelector('.country-list'),
-    cardCountryInfo: document.querySelector('.country-info'),
-    inputForm: document.getElementById('search-box')
+  countriesNameInput: document.querySelector('#search-box'),
+  countriesList: document.querySelector('.country-list'),
+  countriesInfo: document.querySelector('.country-info'),
 };
 
-const debounceDelay = debounce(searchCountry, DEBOUNCE_DELAY)
-refs.inputForm.addEventListener('input', debounceDelay);
+refs.countriesNameInput.addEventListener('input', debounce(onInputChange, DEBOUNCE_DELAY));
 
-function searchCountry(e) {
-    e.preventDefault();
-  
-    const inputValue = e.target.value.trim();
+function onInputChange(e) {
+  const countryName = e.target.value.trim();
 
-  if (!inputValue) {
+  if (!countryName) {
     clearTemplate();
     return;
   }
-    fetchCountries(inputValue)
+
+  fetchCountries(countryName)
     .then(data => {
-        if (data.length > 10) {
-            warningInfo();
-            clearTemplate();
-            return;
-        }
-        renderContryCard(data);
-    })
-    .catch(Error => {
+      if (data.length > 10) {
+        specificNameInfo();
         clearTemplate();
-        warningError();
-    }); 
-};
+        return;
+      }
+      renderTemplate(data);
+    })
+    .catch(error => {
+      clearTemplate();
+      errorWarn();
+    });
+}
 
-function renderContryCard(el) {
-    clearTemplate();
-    if (el.length === 1) {
-        markupCountryInfo = createCountryInfo(el);
-        refs.cardCountryInfo.innerHTML = markupCountryInfo;
-    } else { 
-        markupCountryList = createCountryList(el);
-        refs.cardCountryList.innerHTML = markupCountryList;
-    }   
-};
+function renderTemplate(elements) {
+  let template = '';
+  let refsTemplate = '';
+  clearTemplate();
 
-function createCountryList(el) {
-    return el.map(({ name, flags }) => `<li class="countrylist_item"><img src="${flags.svg}" alt="${name}" class="countrylist_img">
-    <p class="countrylist_text">${name.common}</p></li>`)
+  if (elements.length === 1) {
+    template = createTemplateItem(elements);
+    refsTemplate = refs.countriesInfo;
+  } else {
+    template = createTemplateItemList(elements);
+    refsTemplate = refs.countriesList;
+  }
+
+  drawTemplate(refsTemplate, template);
+}
+
+function createTemplateItem(element) {
+  return element.map(
+    ({ name, capital, population, flags, languages }) =>
+      `
+      <img
+        src="${flags.svg}" 
+        alt="${name.official}" 
+        width="120" 
+        height="80">
+      <h1 class="country-info__title">${name.official}</h1>
+      <ul class="country-info__list">
+          <li class="country-info__item">
+          <span>Capital:</span>
+        ${capital}
+          </li>
+          <li class="country-info__item">
+          <span>Population:</span>
+          ${population}
+          </li>
+          <li class="country-info__item">
+          <span>Lenguages:</span>
+          ${Object.values(languages)}
+          </li>
+      </ul>
+  `
+  );
+}
+
+function createTemplateItemList(elements) {
+  return elements
+    .map(
+      ({ name, flags }) => `
+      <li class="country-list__item">
+        <img class="country-list__img" 
+          src="${flags.svg}" 
+          alt="${name.official}" 
+          width="60" 
+          height="40">
+        ${name.official}
+      </li>`
+    )
     .join('');
-};
+}
 
-function createCountryInfo(el) {
-    return el.map(({ flags, name, capital, population, languages }) =>`
-    <div class="info-conteiner">
-    <div class="countryInfo_conteiner">
-    <img src="${flags.svg}" alt="${name.common}" class="countryInfo_img"> 
-    <h2 class="countryInfo_title">${name.common}</h2>
-  </div>
-  <ul class="countryInfo_list">
-    <li class="countryInfo_item">capital: <span class="countryInfo_span">${capital}</span></li>
-    <li class="countryInfo_item">population: <span class="countryInfo_span">${population}</span></li>
-    <li class="countryInfo_item">languages: <span class="countryInfo_span">${Object.values(languages)}</span></li>
-  </ul>
-  </div>`)
-  .join('');
-};
+function specificNameInfo() {
+  Notify.info('Too many matches found. Please enter a more specific name.');
+}
 
-function warningInfo() {
-    Notiflix.Notify.info('Too many matches found. Please enter a more specific name.');
-};
-
-function warningError() {
-    Notiflix.Notify.failure(`Oops, there is no country with that name`);
-};
+function errorWarn() {
+  Notify.failure(`Oops, there is no country with that name`);
+}
 
 function clearTemplate() {
-    refs.cardCountryList.innerHTML = '';
-    refs.cardCountryInfo.innerHTML = '';
-  };
+  refs.countriesInfo.innerHTML = '';
+  refs.countriesList.innerHTML = '';
+}
 
-  
+function drawTemplate(refs, markup) {
+  refs.innerHTML = markup;
+}
