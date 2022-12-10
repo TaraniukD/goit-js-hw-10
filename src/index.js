@@ -10,7 +10,8 @@ const refs = {
   countriesInfo: document.querySelector('.country-info'),
 };
 
-refs.countriesNameInput.addEventListener('input', debounce(onInputChange, DEBOUNCE_DELAY));
+const debounceDelay = debounce(onInputChange, DEBOUNCE_DELAY);
+refs.countriesNameInput.addEventListener('input', debounceDelay);
 
 function onInputChange(e) {
   const countryName = e.target.value.trim();
