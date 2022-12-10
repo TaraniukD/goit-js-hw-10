@@ -40,12 +40,13 @@ function searchCountry(e) {
 };
 
 function renderContryCard(el) {
+   
     clearTemplate();
     if (el.length === 1) {
-        markupCountryInfo = createCountryInfo(el);
+      const markupCountryInfo = createCountryInfo(el);
         refs.cardCountryInfo.innerHTML = markupCountryInfo;
     } else { 
-        markupCountryList = createCountryList(el);
+       const markupCountryList = createCountryList(el);
         refs.cardCountryList.innerHTML = markupCountryList;
     }   
 };
